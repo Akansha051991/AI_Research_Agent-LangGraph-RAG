@@ -3,9 +3,9 @@ langchain-openai
 langchain-community
 langgraph
 langchain-pinecone
-pinecone-client
 pypdf
 python-dotenv
 wikipedia
 youtube-search-python
 langgraph-checkpoint-sqlite
+pinecone>=5.0.0
