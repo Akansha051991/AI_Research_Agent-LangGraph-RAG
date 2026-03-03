@@ -1,0 +1,16 @@
+# Credentials
+.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Local Database
+chatbot.db
+
+# Streamlit/OS folders
+.streamlit/
+.DS_Store

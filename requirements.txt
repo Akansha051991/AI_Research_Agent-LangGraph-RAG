@@ -1,0 +1,10 @@
+streamlit
+langchain-openai
+langchain-community
+langgraph
+langchain-pinecone
+pinecone-client
+pypdf
+python-dotenv
+wikipedia
+youtube-search-python
