@@ -10,7 +10,9 @@ venv/
 
 # Local Database
 chatbot.db
-
+*.db
+*.db-shm
+*.db-wal
 # Streamlit/OS folders
 .streamlit/
 .DS_Store
