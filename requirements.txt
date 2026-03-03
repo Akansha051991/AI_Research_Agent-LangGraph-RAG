@@ -8,3 +8,4 @@ pypdf
 python-dotenv
 wikipedia
 youtube-search-python
+langgraph-checkpoint-sqlite
