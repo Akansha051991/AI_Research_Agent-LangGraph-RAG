@@ -4,6 +4,7 @@ langchain-community
 langgraph
 langchain-pinecone
 pypdf
+langchain-groq
 python-dotenv
 wikipedia
 youtube-search-python
