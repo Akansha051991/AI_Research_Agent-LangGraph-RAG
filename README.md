@@ -190,6 +190,13 @@ The project is already deployed on Streamlit Community Cloud:
     - Only allows calls to tools that are actually registered.
     - Uses an explicit “safety reviewer” or classifier node to detect prompt injection attempts before hitting the main agent.
 
+### ✅ Testing & Quality Assurance
+To ensure the reliability of the Research Agent, particularly the RAG retrieval accuracy and the multi-model fallback logic, extensive testing was performed.
+
+  **Test Suite:**  A comprehensive set of test cases covering PDF ingestion, Wikipedia/Weather tool triggers, and conversation history persistence.
+
+**Validation Log:** You can view the full breakdown of test scenarios, expected vs. actual results, and pass/fail status here:
+[**Download/View Test Cases (CSV)**](https://github.com/Akansha051991/AI_Research_Agent-LangGraph-RAG/blob/main/test_cases_AI%20Knowledge%20Agent.csv)
 
 ## 📓 Development Journey & Challenges
 For a detailed look at the technical hurdles faced during the build—including state synchronization, tool calling discipline, and RAG priority—check out the full log:
