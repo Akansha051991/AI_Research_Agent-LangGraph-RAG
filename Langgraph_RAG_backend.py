@@ -115,8 +115,10 @@ def get_weather(location: str):
         if "Temperature" in raw_response:
             return f"### 🌡️ Weather for {location}\n{raw_response}"
         return raw_response
-    except:
+    except Exception as e:
+        # TEMP: return the real error so we can debug deployment
         return f"Unable to retrieve weather data for {location}."
+
 
 search_tool = TavilySearchResults(max_results=2)
 wiki_api = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=500)
