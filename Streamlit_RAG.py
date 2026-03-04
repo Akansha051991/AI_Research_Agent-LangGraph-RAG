@@ -38,13 +38,13 @@ st.markdown("""
 
     /* 3. Target the BOTTOM section (History) to GROW and SCROLL */
     .history-container {
-    flex-grow: 1;
-    overflow-y: auto; 
-    border-top: 1px solid #e0e0e0;
-    padding-top: 10px;
-    padding-right: 10px; /* Adds space so scrollbar doesn't touch buttons */
-    scrollbar-width: thin;
-}
+        flex-grow: 1;
+        overflow-y: auto; 
+        border-top: 1px solid #e0e0e0;
+        padding-top: 10px;
+        padding-right: 10px; 
+        scrollbar-width: thin;
+    }
 
     .stButton>button {
         border-radius: 10px;
@@ -63,15 +63,12 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # **************************************** Session State Setup ************************
-# These checks only run if the keys don't exist yet (first-time load)
-
 if 'thread_id' not in st.session_state:
     st.session_state['thread_id'] = str(uuid.uuid4())
 
 if 'message_history' not in st.session_state:
     st.session_state['message_history'] = []
 
-# This ensures your chat history is fetched from the database on startup
 if 'chat_threads' not in st.session_state:
     try:
         st.session_state['chat_threads'] = retrieve_all_threads()
@@ -84,11 +81,8 @@ with st.sidebar:
     st.caption("Powered by LangGraph & Groq")
     st.divider()
     
-    # --- SECTION 1: FIXED TOP (Usage & PDF Upload) ---
-    # This section stays at the top of the sidebar
     st.markdown('<div class="usage-header">', unsafe_allow_html=True)
     
-    # --- PDF Knowledge Base ---
     st.subheader("📁 Knowledge Base")
     current_tid = st.session_state.get('thread_id')
     
@@ -116,7 +110,6 @@ with st.sidebar:
 
     st.divider()
 
-    # --- USAGE DASHBOARD ---
     st.subheader("📊 Session Usage")
 
     total_tokens_session = sum(
@@ -134,7 +127,6 @@ with st.sidebar:
 
     st.caption("⚠️ Totals reflect current thread history only.")
     
-    # --- Actions ---
     if st.button("➕ New Chat", use_container_width=True, type="primary"):
         st.session_state['thread_id'] = str(uuid.uuid4())
         st.session_state['message_history'] = []
@@ -147,13 +139,10 @@ with st.sidebar:
             st.toast("Database cleared successfully!", icon="🗑️")
             st.rerun()
     
-    st.markdown('</div>', unsafe_allow_html=True) # End of Fixed Top
+    st.markdown('</div>', unsafe_allow_html=True) 
     st.divider()
 
-    # --- SECTION 2: SCROLLABLE MIDDLE (History) ---
     st.subheader("📜 History")
-    
-    # CSS creates a scrollable container for this specific div
     st.markdown('<div class="history-container">', unsafe_allow_html=True)
 
     all_threads = retrieve_all_threads()
@@ -175,7 +164,7 @@ with st.sidebar:
             ]
             st.rerun()
     
-    st.markdown('</div>', unsafe_allow_html=True) # End of Scrollable History
+    st.markdown('</div>', unsafe_allow_html=True) 
 
 # **************************************** Main Chat UI *******************************
 
@@ -185,13 +174,9 @@ st.info(f"Active Thread: {st.session_state['thread_id']}")
 # 1. Render History
 for msg in st.session_state['message_history']:
     with st.chat_message(msg['role']):
-    # We add a unique key/anchor for each message for potential deep-linking
         st.markdown(msg['content'])
-        # Only show performance if it exists and tokens > 0
         if msg.get('performance'):
-        # WE DEFINE 'p' HERE for easier typing
             p = msg['performance']
-            # Only show if we have data
             if p.get('tokens', 0) > 0 or p.get('active_model'):
                 model_str = f"🧠 {p.get('active_model', 'AI')} | " if p.get('active_model') else ""
                 st.markdown(
@@ -203,7 +188,6 @@ for msg in st.session_state['message_history']:
 user_query = st.chat_input("Ask a question about your documents or the web...")
 
 if user_query:
-    # --- START TIMER HERE (UI LEVEL) ---
     ui_start_time = time.time() 
 
     st.session_state['message_history'].append({"role": "user", "content": user_query})
@@ -211,63 +195,44 @@ if user_query:
         st.markdown(user_query)
 
     with st.chat_message("assistant"):
-        placeholder = st.empty() # A hollow container for live text
+        placeholder = st.empty() 
         full_response = ""
 
-        # 2. Keep the status box for "behind the scenes" tool work
-        with st.status("🔍 Thinking...", expanded=True) as status:
-            for chunk in chatbot.stream(
+        with st.status("🔍 Processing...", expanded=True) as status:
+            for msg, metadata in chatbot.stream(
                 {"messages": [HumanMessage(content=user_query)]},
-                config={"configurable": {"thread_id": st.session_state['thread_id']}, "recursion_limit": 20},
+                config={"configurable": {"thread_id": st.session_state['thread_id']}},
                 stream_mode="messages"
             ):
-                msg_chunk, metadata = chunk
-
-                # --- HANDLE TOOLS (Inside the Status Box) ---
-
-                if isinstance(msg_chunk, AIMessage) and msg_chunk.tool_calls:
-                    for tc in msg_chunk.tool_calls:
-                        status.write(f"🛠️ Calling Tool: `{tc['name']}`")
+                if msg.type == "tool":
+                    status.write(f"✅ Used tool: {msg.name}")
                 
-                if isinstance(msg_chunk, ToolMessage):
-                    status.write(f"✅ Received data from `{msg_chunk.name}`")
-
-                # --- HANDLE CONTENT (Stream to the Main Bubble) ---
-                if isinstance(msg_chunk,(AIMessage, AIMessageChunk)) and msg_chunk.content:
-                    # Update the status box to show we are now generating text
-                    status.update(label="✅ Response Generated", state="running", expanded=False)
-                    full_response += msg_chunk.content
-                    # Use the placeholder OUTSIDE the status box for the typing effect
-                    placeholder.markdown(full_response + "▌")
-                    # Finalize the status box
-            status.update(label="✅ Task Complete", state="complete", expanded=False)
+                elif isinstance(msg, AIMessage) and msg.content:
+                    if not msg.tool_calls:
+                        full_response += msg.content
+                        placeholder.markdown(full_response + "▌")
             
-            # 3. Final clean render without the cursor
+            status.update(label="Response complete!", state="complete", expanded=False)
+
         placeholder.markdown(full_response)
 
-        # --- END TIMER HERE ---
+        # --- Performance Tracking (Now correctly indented inside if user_query) ---
         ui_latency = time.time() - ui_start_time
-
-        # 3. Final Metadata Aggregator
         final_state = chatbot.get_state(config={"configurable": {"thread_id": st.session_state['thread_id']}})
-        # Pull the metadata dictionary we created in the backend chat_node
         node_metadata = final_state.values.get("metadata", {})
-        # Use backend latency if available, otherwise fallback to UI timer
-        # Priority 1: Use the backend generation latency
-        # Priority 2: Fallback to the total UI-level wait time
-        display_latency = node_metadata.get("generation_latency", f"{time.time() - ui_start_time:.2f}s")
-        # 1. Try to get tokens directly from backend metadata first
+        
+        display_latency = node_metadata.get("generation_latency", f"{ui_latency:.2f}s")
+        
         total_t = node_metadata.get("tokens", 0)
-        # 2. If metadata returned 0, try the fallback loop
         if total_t == 0:
             all_msgs = final_state.values.get("messages", [])
-            for m in reversed(all_msgs[-2:]): # Look at the most recent AI response
+            for m in reversed(all_msgs[-2:]):
                 if isinstance(m, AIMessage):
                     usage = getattr(m, "usage_metadata", None) or m.response_metadata.get("token_usage", {})
                     if isinstance(usage, dict):
                         total_t = usage.get("total_tokens", 0)
                         if total_t > 0:
-                            break # Found them! Stop looking.
+                            break
 
         perf_data = {
             "latency": display_latency,
