@@ -102,11 +102,11 @@ def rag_tool(query: str, config: RunnableConfig):
     # Use the GLOBAL vectorstore and just specify the namespace during the search
     docs = vectorstore.similarity_search(
         query, 
-        k=4, 
+        k=2, 
         namespace=str(t_id) # Namespace keeps data isolated per thread
     )
-    formatted_docs = [f"[Source: Page {d.metadata.get('page', 0) + 1}]\nContent: {d.page_content}" for d in docs]
-    return "\n\n---\n\n".join(formatted_docs) if formatted_docs else "No matching content found."
+    formatted_docs = [f"[P{d.metadata.get('page', 0)+1}]: {d.page_content[:500]}" for d in docs]
+    return "\n\n".join(formatted_docs) if formatted_docs else "No info found."
 
 @tool
 def youtube_search(query: str):
@@ -156,7 +156,7 @@ def chat_node(state: ChatState, config: RunnableConfig):
     # Trim history to manage context window
     trimmed_messages = trim_messages(
         state["messages"],
-        max_tokens=2000,
+        max_tokens=1000,
         strategy="last",
         token_counter=lambda msgs: sum(len(m.content) for m in msgs) // 4, 
         include_system=True,
