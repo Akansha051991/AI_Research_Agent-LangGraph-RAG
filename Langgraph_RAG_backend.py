@@ -117,7 +117,7 @@ def get_weather(location: str):
         return raw_response
     except Exception as e:
         # TEMP: return the real error so we can debug deployment
-        return f"Weather error for {location}: {e!r}"
+        return f"Unable to retrieve weather data for {location}."
 
 
 search_tool = TavilySearchResults(max_results=2)
