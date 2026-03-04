@@ -1,5 +1,13 @@
 # 🧬 AI Knowledge RAG – Research Agent with LangGraph & Streamlit
 An AI-first research assistant that combines Retrieval-Augmented Generation (RAG), multi-model fallback (Groq, Gemini, OpenAI), and live tools (web search, Wikipedia, YouTube, weather) in a clean Streamlit UI.
+# 🤖 AI Knowledge RAG
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://agentic-rag-ai.streamlit.app/)
+![Project Status](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square&logo=github)
+![Deployment](https://img.shields.io/badge/Deployment-Passing-success?style=flat-square&logo=streamlit)
+
+<img width="560" height="290" alt="AI Knowledge RAG Architecture" src="https://github.com/user-attachments/assets/08662858-700d-4c75-9126-6f2d3ec3f006" />
+
 
 ## 🌟 Key Features
 * **Agentic Workflow:** Agentic RAG with LangGraph
@@ -69,7 +77,8 @@ cd agentic-rag-ai
 ### 2. Create and Activate a Virtual Environment
 ```
 python -m venv .venv
-source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
+# On Windows: .venv\Scripts\activate
 ```
 ### 3. Install Dependencies
 ```
@@ -98,6 +107,12 @@ streamlit run app.py
 ```
 * Then open the URL shown in your terminal (typically http://localhost:8501).
 
+ ### 5. Verify Observability
+ 
+After interacting with the bot, visit your LangSmith dashboard to see the execution traces:
+
+[![LangSmith](https://img.shields.io/badge/LangSmith-Observability-orange?style=flat-square&logo=langchain&logoColor=white)](https://eu.smith.langchain.com/)
+
 ###  🧪 How to Use the App
  Start a new chat  ---> Upload a PDF (optional but recommended)  ---> Ask a question --> Inspect responses --> Monitor usage --> Navigate history ---> Reset or clear
 
@@ -123,6 +138,21 @@ The project is already deployed on Streamlit Community Cloud:
  
 ### Visual Representation 
  
-<img width="7138" height="6365" alt="Chat Workflow Integration-2026-03-04-010920" src="https://github.com/user-attachments/assets/5b2edc8c-1cd4-4690-819c-810fe02f1e12" />
+<img width="6000" height="5000" alt="Chat Workflow Integration-2026-03-04-010920" src="https://github.com/user-attachments/assets/5b2edc8c-1cd4-4690-819c-810fe02f1e12" />
+
+
+### 🗓️ Upcoming Milestones
+
+- [x] **Scale & Performance:** Add support for multiple-PDF uploads and optimize the pipeline to handle larger files more gracefully.
+- [x] **The Evaluation Layer:** Introduce a formal evaluation framework, such as RAGAS, to move from "vibes-based" testing to quantified   metrics.
+- [x] **Semantic Chunking:** Measure the impact on context precision when switching from naive character-based splitting.
+- [x] **Hybrid Retrieval:** Implement BM25 + Vector Search to improve keyword-based retrieval accuracy.
+- [x] **Retrieve → evaluate “is this enough / relevant?” → refine query & re‑retrieve → answer.** 
+- [x] “self‑corrective” RAG loop.
+
+  
+## 📖 Technical Evolution (Dev Log)
+For a deep dive into the technical hurdles, **"Overwhelming" moments,challenges and Lessons Learnt** 
+
 
 
