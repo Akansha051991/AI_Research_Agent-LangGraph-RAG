@@ -12,3 +12,4 @@ wikipedia
 youtube-search-python
 langgraph-checkpoint-sqlite
 pinecone>=5.0.0
+pyowm
