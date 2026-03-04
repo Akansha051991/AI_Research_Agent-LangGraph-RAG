@@ -148,6 +148,17 @@ The project is already deployed on Streamlit Community Cloud:
  
 <img width="6000" height="5000" alt="Chat Workflow Integration-2026-03-04-010920" src="https://github.com/user-attachments/assets/5b2edc8c-1cd4-4690-819c-810fe02f1e12" />
 
+## 🧪 Evaluation & Metrics
+
+- **Runtime metrics:** Each assistant message includes latency, token count, and the active model, collected from `usage_metadata`.  
+- **Cost tracking:** The sidebar shows aggregated tokens and an estimated cost per thread.  
+- **Planned:** A small evaluation script that runs a fixed set of questions against a sample PDF to compare:
+  - RAG vs no‑RAG,
+  - Groq‑only vs multi‑LLM fallback,
+  - Different `k` values in similarity search.
+ 
+  
+      <img width="150" height="150" alt="image" src="https://github.com/user-attachments/assets/98912efd-f844-4c00-b1e9-c9628416deb0" />
 
 
 ### 🗓️ Upcoming Milestones
