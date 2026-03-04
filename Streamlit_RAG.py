@@ -12,7 +12,6 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx
 from Langgraph_RAG_backend import chatbot, retrieve_all_threads, ingest_pdf, clear_all_history
 
 # **************************************** Page Config & Styling **********************
-
 st.set_page_config(page_title="AI Research Agent", page_icon="🤖", layout="wide")
 
 st.markdown("""
