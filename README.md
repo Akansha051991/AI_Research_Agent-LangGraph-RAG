@@ -1,5 +1,7 @@
-# 🧬 AI Knowledge RAG – Research Agent with LangGraph & Streamlit
-An AI-first research assistant that combines Retrieval-Augmented Generation (RAG), multi-model fallback (Groq, Gemini, OpenAI), and live tools (web search, Wikipedia, YouTube, weather) in a clean Streamlit UI.
+# 🧬 AI Knowledge RAG Agent
+
+A production‑style agentic RAG system built with LangGraph, Pinecone, and multi‑LLM fallbacks to help you ask deep questions over your own PDFs and the web.
+
 # 🤖 AI Knowledge RAG
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://agentic-rag-ai.streamlit.app/)
@@ -8,25 +10,25 @@ An AI-first research assistant that combines Retrieval-Augmented Generation (RAG
 
 <img width="560" height="290" alt="AI Knowledge RAG Architecture" src="https://github.com/user-attachments/assets/08662858-700d-4c75-9126-6f2d3ec3f006" />
 
+## ✨ Overview
 
-## 🌟 Key Features
-* **Agentic Workflow:** Agentic RAG with LangGraph
+Upload a PDF (research paper, RFC, design doc) and chat with an AI agent that can:
 
-  * **Stateful** agent built on StateGraph with a chat_node and ToolNode wired through tools_condition.
-  * **Uses** SqliteSaver as a checkpointer to persist conversations per thread_id
-
-* **Multi-model fallback (Resilient LLM stack)**
-  * **Primary:** Groq llama-3.3-70b-versatile (fast, strong reasoning).
-  * **Secondary:** Google gemini-2.0-flash.
-  * **Tertiary:** OpenAI gpt-4o-mini.
-  
-   All three are bound to the same toolset and orchestrated via .with_fallbacks(...)
+- Use a **Pinecone‑backed RAG pipeline** to ground answers in your document.
+- Call tools like **web search, Wikipedia, YouTube, and weather APIs** when needed.
+- Persist full **conversation history and knowledge base** per thread using LangGraph checkpoints.
+- Fail over between **Groq Llama 3.3 70B → Gemini 2.0 Flash → GPT‑4o mini** for reliability and latency.
 
 
-  * **PDF Knowledge Base (Per-Thread RAG)**
-      Upload a PDF per chat thread and build a Pinecone vector namespace keyed by thread_id.
-      Chunking via RecursiveCharacterTextSplitter and embeddings via multilingual-e5-large (Pinecone embeddings).
-      rag_tool always queried first (enforced in the system prompt) for knowledge-base-centric answers.
+## 🚀 Key Features
+
+- **Agentic RAG with LangGraph** – `chat_node` + `ToolNode` + `tools_condition` let the LLM decide when to call tools vs answer directly from context.
+- **Per‑thread PDF knowledge bases** – Each chat gets its own Pinecone namespace, so different PDFs and conversations never leak into each other.
+- **Multi‑LLM fallback chain** – Groq → Gemini → OpenAI with `.with_fallbacks`, plus metadata showing which model actually answered and how many tokens were used.  
+- **Streaming research UI** – Streamlit chat with live typing effect, a status box that shows tool calls, and perf captions (latency, tokens, active model) under each answer.  
+- **Persistent memory & history** – LangGraph’s `SqliteSaver` stores state per `thread_id`, and the sidebar reconstructs past sessions with human‑message‑based titles. 
+- **Cost awareness** – Per‑thread token totals and estimated cost metrics in the sidebar.
+
 
 ## Rich Tooling Layer
 
@@ -64,6 +66,13 @@ An AI-first research assistant that combines Retrieval-Augmented Generation (RAG
 * Thread history list (buttons that load stored messages from chatbot state and reconstruct message_history).
 
 
+## ⚙️ Tech Stack
+
+- **Frameworks:** LangGraph, LangChain, Streamlit  
+- **LLMs:** Groq Llama‑3.3‑70B, Google Gemini 2.0 Flash, OpenAI GPT‑4o mini  
+- **RAG:** Pinecone Vector Store + `multilingual-e5-large` embeddings  
+- **Storage:** SQLite (LangGraph checkpoints and thread history)  
+- **Tools:** Tavily search, Wikipedia API, YouTube search, OpenWeatherMap
 
 ## 🚀 Getting Started
 
@@ -93,7 +102,6 @@ GROQ_API_KEY=your_groq_key
 GOOGLE_API_KEY=your_gemini_key
 OPENAI_API_KEY=your_openai_key
 PINECONE_API_KEY=your_pinecone_key
-
 # Optional if Tavily / OpenWeather / etc. require keys in your setup
 TAVILY_API_KEY=your_tavily_key
 OPENWEATHERMAP_API_KEY=your_openweather_key
@@ -141,6 +149,7 @@ The project is already deployed on Streamlit Community Cloud:
 <img width="6000" height="5000" alt="Chat Workflow Integration-2026-03-04-010920" src="https://github.com/user-attachments/assets/5b2edc8c-1cd4-4690-819c-810fe02f1e12" />
 
 
+
 ### 🗓️ Upcoming Milestones
 
 - [x] **Scale & Performance:** Add support for multiple-PDF uploads and optimize the pipeline to handle larger files more gracefully.
@@ -152,7 +161,7 @@ The project is already deployed on Streamlit Community Cloud:
 
   
 ## 📖 Technical Evolution (Dev Log)
-For a deep dive into the technical hurdles, **"Overwhelming" moments,challenges and Lessons Learnt** 
+This log tracks the technical evolution, hurdles, and architectural decisions made during the development of this project.
 
 
 
