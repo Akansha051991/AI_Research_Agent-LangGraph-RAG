@@ -22,17 +22,6 @@ st.markdown("""
         background-color: #f0f2f6;
         border-right: 1px solid #e0e0e0;
     }
-    /* Target the sidebar content for Flexbox */
-    [data-testid="stSidebarUserContent"] {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-    }
-    /* Target the main block to grow and push the footer down */
-    [data-testid="stSidebarUserContent"] > div:first-child {
-        flex: 1;
-        overflow-y: auto;
-    }
     .stButton>button {
         border-radius: 10px;
         height: 3em;
@@ -63,15 +52,8 @@ st.markdown("""
         color: #9ca3af;
         margin-top: 5px;
     }
-    /* Styling for your usage footer specifically */
-    .sticky-usage {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-top: 1px solid #ddd;
-    }
     </style>
     """, unsafe_allow_html=True)
-
 
 # **************************************** Session State Setup ************************
 if 'thread_id' not in st.session_state:
