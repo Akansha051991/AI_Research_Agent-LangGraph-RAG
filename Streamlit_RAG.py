@@ -15,39 +15,46 @@ from Langgraph_RAG_backend import chatbot, retrieve_all_threads, ingest_pdf, cle
 
 st.set_page_config(page_title="AI Research Agent", page_icon="🤖", layout="wide")
 
-# Custom CSS for a more polished look
 st.markdown("""
     <style>
     .stApp { background-color: #ffffff; }
+    
     section[data-testid="stSidebar"] {
         background-color: #f0f2f6;
         border-right: 1px solid #e0e0e0;
     }
+
+    /* 1. Make the sidebar a flex container with a fixed height */
+    [data-testid="stSidebarUserContent"] {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* 2. Target the TOP section (Usage/Knowledge Base) to NOT scroll */
+    .usage-header {
+        flex-shrink: 0; 
+        padding-bottom: 10px;
+    }
+
+    /* 3. Target the BOTTOM section (History) to GROW and SCROLL */
+    .history-container {
+    flex-grow: 1;
+    overflow-y: auto; 
+    border-top: 1px solid #e0e0e0;
+    padding-top: 10px;
+    padding-right: 10px; /* Adds space so scrollbar doesn't touch buttons */
+    scrollbar-width: thin;
+}
+
     .stButton>button {
         border-radius: 10px;
         height: 3em;
         transition: all 0.2s ease-in-out;
     }
-    .stStatus {
-        border-radius: 15px;
-        border: 1px solid #f0f2f6;
-    }
-    .session-info {
-        font-size: 0.8rem;
-        color: #6b7280;
-        margin-bottom: 10px;
-    } /* <--- Added this missing brace */
-            
-    .weather-report {
-        background-color: #f0f8ff;
-        color: #1e3a8a;
-        padding: 15px;
-        border-left: 5px solid #3b82f6;
-        border-radius: 8px;
-        margin: 10px 0;
-    }
+
+    .stStatus { border-radius: 15px; border: 1px solid #f0f2f6; }
     
-    /* Performance caption styling */
     .perf-caption {
         font-size: 0.75rem;
         color: #9ca3af;
@@ -56,16 +63,21 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-
 # **************************************** Session State Setup ************************
+# These checks only run if the keys don't exist yet (first-time load)
+
 if 'thread_id' not in st.session_state:
     st.session_state['thread_id'] = str(uuid.uuid4())
 
 if 'message_history' not in st.session_state:
     st.session_state['message_history'] = []
 
+# This ensures your chat history is fetched from the database on startup
 if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads'] = retrieve_all_threads()
+    try:
+        st.session_state['chat_threads'] = retrieve_all_threads()
+    except Exception:
+        st.session_state['chat_threads'] = []
 
 # **************************************** Sidebar UI *********************************
 with st.sidebar:
@@ -73,9 +85,13 @@ with st.sidebar:
     st.caption("Powered by LangGraph & Groq")
     st.divider()
     
+    # --- SECTION 1: FIXED TOP (Usage & PDF Upload) ---
+    # This section stays at the top of the sidebar
+    st.markdown('<div class="usage-header">', unsafe_allow_html=True)
+    
     # --- PDF Knowledge Base ---
     st.subheader("📁 Knowledge Base")
-    current_tid = st.session_state['thread_id']
+    current_tid = st.session_state.get('thread_id')
     
     if st.session_state.get(f"ingested_{current_tid}"):
         st.success("✅ PDF Active for this chat")
@@ -101,6 +117,24 @@ with st.sidebar:
 
     st.divider()
 
+    # --- USAGE DASHBOARD ---
+    st.subheader("📊 Session Usage")
+
+    total_tokens_session = sum(
+        msg.get('performance', {}).get('tokens', 0) 
+        for msg in st.session_state.get('message_history', []) 
+        if msg.get('role') == 'assistant'
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Total Tokens", f"{total_tokens_session:,}")
+    with col2:
+        estimated_cost = (total_tokens_session / 1_000_000) * 0.15
+        st.metric("Est. Cost", f"${estimated_cost:.4f}")
+
+    st.caption("⚠️ Totals reflect current thread history only.")
+    
     # --- Actions ---
     if st.button("➕ New Chat", use_container_width=True, type="primary"):
         st.session_state['thread_id'] = str(uuid.uuid4())
@@ -113,16 +147,21 @@ with st.sidebar:
             st.session_state['message_history'] = []
             st.toast("Database cleared successfully!", icon="🗑️")
             st.rerun()
-
+    
+    st.markdown('</div>', unsafe_allow_html=True) # End of Fixed Top
     st.divider()
+
+    # --- SECTION 2: SCROLLABLE MIDDLE (History) ---
     st.subheader("📜 History")
+    
+    # CSS creates a scrollable container for this specific div
+    st.markdown('<div class="history-container">', unsafe_allow_html=True)
 
     all_threads = retrieve_all_threads()
     for thread_info in all_threads:
         tid = thread_info['id'] 
         title = thread_info.get('title', f"Chat: {tid[:8]}") 
         
-        # We only loop the BUTTONS here
         if st.button(f"💬 {title}", key=f"btn_{tid}", use_container_width=True):
             st.session_state['thread_id'] = tid
             state = chatbot.get_state(config={"configurable": {"thread_id": tid}})
@@ -131,31 +170,13 @@ with st.sidebar:
                 {
                     "role": "user" if isinstance(m, HumanMessage) else "assistant", 
                     "content": m.content,
-                    # Restore performance data from additional_kwargs if it exists
                     "performance": m.additional_kwargs.get("performance", {}) 
                 } 
                 for m in msgs if m.content and not isinstance(m, (ToolMessage, AIMessageChunk))
             ]
             st.rerun()
-
-    # --- USAGE DASHBOARD (Moved OUTSIDE the thread loop) ---
-    st.divider()
-    st.subheader("📊 Session Usage")
-
-    total_tokens_session = sum(
-        msg.get('performance', {}).get('tokens', 0) 
-        for msg in st.session_state['message_history'] 
-        if msg.get('role') == 'assistant'
-    )
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Total Tokens", f"{total_tokens_session:,}")
-    with col2:
-        estimated_cost = (total_tokens_session / 1_000_000) * 0.15
-        st.metric("Est. Cost", f"${estimated_cost:.4f}")
-
-    st.caption("⚠️ Totals reflect current thread history only.")
+    
+    st.markdown('</div>', unsafe_allow_html=True) # End of Scrollable History
 
 # **************************************** Main Chat UI *******************************
 
@@ -165,6 +186,7 @@ st.info(f"Active Thread: {st.session_state['thread_id']}")
 # 1. Render History
 for msg in st.session_state['message_history']:
     with st.chat_message(msg['role']):
+    # We add a unique key/anchor for each message for potential deep-linking
         st.markdown(msg['content'])
         # Only show performance if it exists and tokens > 0
         if msg.get('performance'):
