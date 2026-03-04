@@ -12,7 +12,6 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx
 from Langgraph_RAG_backend import chatbot, retrieve_all_threads, ingest_pdf, clear_all_history
 
 # **************************************** Page Config & Styling **********************
-
 st.set_page_config(page_title="AI Research Agent", page_icon="🤖", layout="wide")
 
 # Custom CSS for a more polished look
@@ -22,6 +21,17 @@ st.markdown("""
     section[data-testid="stSidebar"] {
         background-color: #f0f2f6;
         border-right: 1px solid #e0e0e0;
+    }
+    /* Target the sidebar content for Flexbox */
+    [data-testid="stSidebarUserContent"] {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    /* Target the main block to grow and push the footer down */
+    [data-testid="stSidebarUserContent"] > div:first-child {
+        flex: 1;
+        overflow-y: auto;
     }
     .stButton>button {
         border-radius: 10px;
@@ -52,6 +62,12 @@ st.markdown("""
         font-size: 0.75rem;
         color: #9ca3af;
         margin-top: 5px;
+    }
+    /* Styling for your usage footer specifically */
+    .sticky-usage {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #ddd;
     }
     </style>
     """, unsafe_allow_html=True)
