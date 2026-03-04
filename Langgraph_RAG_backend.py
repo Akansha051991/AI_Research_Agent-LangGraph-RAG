@@ -40,7 +40,7 @@ class ChatState(TypedDict):
     # metadata stores performance data; Optional allows it to be empty initially
     metadata: Optional[dict] 
 
-# 2. Primary Model: Groq (Llama 3.3)
+#1. Primary Model: Groq (Llama 3.3)
 groq_llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     api_key=os.getenv("GROQ_API_KEY"),
@@ -48,22 +48,23 @@ groq_llm = ChatGroq(
     max_retries=2,
     timeout=20
 )
+#2. Tertiary Model: OpenAI (GPT-4o-mini)
+openai_llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
+    temperature=0,
+    max_retries=3,
+    timeout=60
+)
 # 3. Secondary Model: Google Gemini (2.0 Flash)
 gemini_llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
     api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0,
     max_retries=2,
-    timeout=20
+    timeout=30
 )
-# 3. Tertiary Model: OpenAI (GPT-4o-mini)
-openai_llm = ChatOpenAI(
-    model="gpt-4o-mini",
-    api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0,
-    max_retries=2,
-    timeout=20
-)
+
 
 embeddings = PineconeEmbeddings(
     model="multilingual-e5-large", 
@@ -87,18 +88,25 @@ def ingest_pdf(file_path: str, thread_id: str):
     )
     return {"status": "success", "chunks": len(splits)}
 # --- 3. TOOLS ---
+# --- GLOBAL INITIALIZATION (Do this once outside the tool) ---
+# Initialize the Pinecone VectorStore globally so it's ready to go
+vectorstore = PineconeVectorStore(
+    index_name=index_name, 
+    embedding=embeddings
+)
+
 @tool
 def rag_tool(query: str, config: RunnableConfig):
     """Search the PDF knowledge base for technical or document-specific information."""
     t_id = config.get("configurable", {}).get("thread_id")
-    vectorstore = PineconeVectorStore(
-        index_name=index_name, 
-        embedding=embeddings, 
-        namespace=str(t_id) 
+    # Use the GLOBAL vectorstore and just specify the namespace during the search
+    docs = vectorstore.similarity_search(
+        query, 
+        k=4, 
+        namespace=str(t_id) # Namespace keeps data isolated per thread
     )
-    docs = vectorstore.similarity_search(query, k=4)
     formatted_docs = [f"[Source: Page {d.metadata.get('page', 0) + 1}]\nContent: {d.page_content}" for d in docs]
-    return "\n\n---\n\n".join(formatted_docs) if formatted_docs else "No matching content found in the document."
+    return "\n\n---\n\n".join(formatted_docs) if formatted_docs else "No matching content found."
 
 @tool
 def youtube_search(query: str):
@@ -124,10 +132,6 @@ search_tool = TavilySearchResults(max_results=2)
 wiki_api = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=500)
 wiki_tool = WikipediaQueryRun(api_wrapper=wiki_api)
 
-# Define the models
-groq_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
-gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0)
-openai_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 # Define your tools list 
 tools = [search_tool, wiki_tool, get_weather, youtube_search, rag_tool] 
@@ -141,7 +145,8 @@ openai_with_tools = openai_llm.bind_tools(tools)
 
 # Create the resilient chain
 # It tries Groq -> then Gemini -> then OpenAI
-llm_with_tools = groq_with_tools.with_fallbacks([gemini_with_tools, openai_with_tools])
+llm_with_tools = groq_with_tools.with_fallbacks([openai_with_tools, gemini_with_tools])
+
 
 # --- 4. GRAPH NODES ---
 def chat_node(state: ChatState, config: RunnableConfig): 
@@ -159,7 +164,7 @@ def chat_node(state: ChatState, config: RunnableConfig):
     )
     
     system_instruction = SystemMessage(content=(
-    "You are a Research Assistant. ALWAYS check the 'knowledge_base' tool first "
+    "You are a Research Assistant. ALWAYS check the 'rag_tool' tool first "
     "for any user query. Only use Wikipedia if the knowledge_base tool returns "
     "no relevant information. If the user mentions 'knowledge base', DO NOT "
     "use Wikipedia."
